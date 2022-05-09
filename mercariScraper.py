@@ -10,7 +10,7 @@ useUrl = False
 useKeywords = False
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15"
-MERCARI_BASE = "mercari.com/search/?"
+MERCARI_BASE = "https://www.mercari.com/search/?keyword="
 
 def init_argparse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -22,6 +22,7 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument('-l', '--limit', help='The upper limit on how many entries should be searched')
     parser.add_argument('-w', '--write', help='The filename to write out to (if applicable)')
     return parser
+
 
 def construct_url(searchstr):
     return (MERCARI_BASE + urllib.parse.quote(searchstr))
@@ -36,8 +37,6 @@ def validateArgs(args):
     elif args.searchstring != None:
         global useKeywords
         useKeywords = True
-    # validate url is mercari url here
-    # if (args.url != None):
 
 def getPageData(args) -> requests.Response:
     print(args)
@@ -47,6 +46,10 @@ def getPageData(args) -> requests.Response:
     if useUrl:
         print('trying to get url')
         return requests.get(args.url, headers=reqHeaders)
+    elif useKeywords:
+        print(construct_url(args.searchstring))
+        return requests.get(construct_url(args.searchstring),  headers=reqHeaders)
+        
 
 def writeCsv(dataArr):
     f = open('./output.csv', 'w')
@@ -105,7 +108,6 @@ def main():
     print('successful retrieve ' + str(res.status_code == requests.codes.ok))
     bs = BeautifulSoup(res.content, 'html.parser')
     itemMatches = bs.find_all('a', class_="Text__LinkText-sc-1e98qiv-0-a Link__StyledAnchor-dkjuk2-0 fiIUU Link__StyledPlainLink-dkjuk2-3 beSDvJ")
-    print(itemMatches[0].prettify())
     itemInfoLst = create_data_dict(itemMatches)
     print('List of items has size of ' + str(len(itemInfoLst)))
     writeCsv(itemInfoLst)
